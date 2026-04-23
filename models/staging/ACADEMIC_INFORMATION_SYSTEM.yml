@@ -28,8 +28,9 @@ sources:
             tests:
               - not_null
               - relationships:
-                  to: source('ACADEMIC_INFORMATION_SYSTEM', 'STUDENTS')
-                  field: STUDENT_ID
+                 arguments:
+                   to: source('ACADEMIC_INFORMATION_SYSTEM', 'STUDENTS')
+                   field: STUDENT_ID
 
           - name: ADMISSION_STATUS
             tests:
@@ -59,8 +60,9 @@ sources:
           - name: DEPARTMENT_ID
             tests:
               - relationships:
-                  to: source('ACADEMIC_INFORMATION_SYSTEM', 'DEPARTMENTS')
-                  field: DEPARTMENT_ID
+                  arguments:
+                     to: source('ACADEMIC_INFORMATION_SYSTEM', 'DEPARTMENTS')
+                     field: DEPARTMENT_ID
 
           - name: CREDITS
             tests:
@@ -109,14 +111,16 @@ sources:
           - name: STUDENT_ID
             tests:
               - relationships:
-                  to: source('ACADEMIC_INFORMATION_SYSTEM', 'STUDENTS')
-                  field: STUDENT_ID
+                  arguments:
+                    to: source('ACADEMIC_INFORMATION_SYSTEM', 'STUDENTS')
+                    field: STUDENT_ID
 
           - name: COURSE_ID
             tests:
               - relationships:
-                  to: source('ACADEMIC_INFORMATION_SYSTEM', 'COURSES')
-                  field: COURSE_ID
+                  arguments:
+                    to: source('ACADEMIC_INFORMATION_SYSTEM', 'COURSES')
+                    field: COURSE_ID
 
           - name: ENROLLMENTSTATUS
             tests:
@@ -153,8 +157,9 @@ sources:
           - name: DEPARTMENT_ID
             tests:
               - relationships:
-                  to: source('ACADEMIC_INFORMATION_SYSTEM', 'DEPARTMENTS')
-                  field: DEPARTMENT_ID
+                 arguments:
+                   to: source('ACADEMIC_INFORMATION_SYSTEM', 'DEPARTMENTS')
+                   field: DEPARTMENT_ID
 
           - name: GENDER
             tests:
