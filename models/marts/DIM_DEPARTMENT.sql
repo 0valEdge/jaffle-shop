@@ -1,5 +1,5 @@
-with ADMISSIONS as (
-    select * from {{ source('ACADEMIC_INFORMATION_SYSTEM','ADMISSIONS') }}
+with Department as (
+    select * from {{ source('ACADEMIC_INFORMATION_SYSTEM','DEPARTMENTS') }}
 )
 
-select * from ADMISSIONS
+select * from Department
