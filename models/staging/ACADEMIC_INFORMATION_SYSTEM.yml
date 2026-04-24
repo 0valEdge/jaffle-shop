@@ -3,8 +3,8 @@ version: 2
 sources:
   - name: ACADEMIC_INFORMATION_SYSTEM
     description: Source tables from the Academic Information System
-    database: ACADEMIC_INFORMATION_SYSTEM
-    schema: STG__ACADEMIC_INFORMATION_SYSTEM
+    database: ACADEMICMANAGEMENT
+    schema: STG_ACADEMICMANAGEMENT
 
 
     tables:
