@@ -5,7 +5,7 @@ version: "3.0.0"
 require-dbt-version: ">=1.5.0"
 
 dbt-cloud:
-  project-id: 275557 # Put your project id here
+  project-id: 531558 # Put your project id here
 
 profile: default # Put your profile here
 
@@ -27,12 +27,17 @@ vars:
 seeds:
   jaffle_shop:
     +schema: raw
-    jaffle-data:
-      +enabled: "{{ var('load_source_data', false) }}"
+
+    jaffle_data:
+      +enabled: false
 
 models:
   jaffle_shop:
     staging:
-      +materialized: view
-    marts:
       +materialized: table
+    marts:
+      +materialized: view
+
+tests:
+  +store_failures: true
+  +severity: warn
