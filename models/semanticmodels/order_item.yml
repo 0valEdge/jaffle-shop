@@ -2,6 +2,7 @@ semantic_models:
   - name: order_items
     description: |
       Items contained in each order. The grain is one row per order item.
+    model: ref('order_items')
     defaults:
       agg_time_dimension: ordered_at
 

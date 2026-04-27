@@ -5,9 +5,6 @@ models:
         data_tests:
           - not_null
           - unique
-        entity:
-          type: primary
-          name: order_item
 
       - name: order_id
         data_tests:
@@ -15,29 +12,16 @@ models:
               arguments: 
                 to: ref('orders')
                 field: order_id
-        entity:
-          type: foreign
-          name: order
 
       - name: product_id
-        entity:
-          type: foreign
-          name: product
+        data_tests:
+          - not_null
 
       - name: ordered_at
-        dimension:
-          type: time
-        granularity: day
-
+      
       - name: is_food_item
-        dimension:
-          type: categorical
-
+     
       - name: is_drink_item
-        dimension:
-          type: categorical
-
-
 
 unit_tests:
   - name: test_supply_costs_sum_correctly
