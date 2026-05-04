@@ -33,16 +33,3 @@ models:
                 values: ["new", "returning"]
 
 
-saved_queries:
-  - name: customer_order_metrics
-    query_params:
-      metrics:
-        - count_lifetime_orders
-        - lifetime_spend_pretax
-        - average_order_value
-      group_by:
-        - Entity('customer')
-    exports:
-      - name: customer_order_metrics
-        config:
-          export_as: table
