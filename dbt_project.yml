@@ -41,3 +41,6 @@ models:
 tests:
   +store_failures: true
   +severity: warn
+
+on-run-start:
+  - "{{ create_get_customer_segment() }}"
