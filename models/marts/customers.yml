@@ -11,10 +11,13 @@ models:
         data_tests:
           - not_null
           - unique
+          - is_positive_int
       - name: customer_name
         description: Customers' full name.
       - name: count_lifetime_orders
         description: Total number of orders a customer has ever placed.
+        tests:
+          - is_positive_int
       - name: first_ordered_at
         description: The timestamp when a customer placed their first order.
       - name: last_ordered_at
