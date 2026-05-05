@@ -33,10 +33,11 @@ seeds:
 
 models:
   jaffle_shop:
+    +database: ENTERPRISE_DB
     staging:
-      +materialized: table
+        +materialized: table
     marts:
-      +materialized: view
+        +materialized: view
 
 tests:
   +store_failures: true
