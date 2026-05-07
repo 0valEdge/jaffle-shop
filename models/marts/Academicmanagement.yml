@@ -1,0 +1,423 @@
+version: 2
+
+# =============================================================================
+# dbt Fusion Engine — New Semantic Layer YAML Spec
+# (dbt platform Latest track / Fusion / dbt Core v1.12+)
+#
+# Key layout rules (from https://docs.getdbt.com/docs/build/latest-metrics-spec):
+#
+#   models:
+#     - name: my_model
+#       semantic_model:        ← enables semantic modeling; child keys: enabled, name
+#         enabled: true
+#       agg_time_dimension:    ← SIBLING of semantic_model (NOT inside it)
+#       columns:               ← SIBLING of semantic_model
+#         - name: col
+#           entity: / dimension:   ← semantic annotations per column
+#       metrics:               ← SIBLING of semantic_model; simple metrics only
+#         - name: my_metric
+#           type: simple
+#           agg: sum
+#           expr: col
+#
+#   metrics:                   ← TOP-LEVEL; advanced metrics (ratio, derived,
+#                                cumulative) or cross-model refs only
+#
+#   saved_queries:             ← TOP-LEVEL; valid query_params keys:
+#                                metrics, group_by, where
+# =============================================================================
+
+models:
+
+  # ---------------------------------------------------------------------------
+  # FACT: Student Enrollment
+  # ---------------------------------------------------------------------------
+  - name: Fact_Student_Enrollment
+    description: |
+      Fact table capturing student enrollment events.
+      Grain: one row per enrollment.
+
+    semantic_model:
+      enabled: true
+
+    agg_time_dimension: enrollment_date   # sibling of semantic_model, not inside it
+
+    columns:
+
+      # ── Primary key ─────────────────────────────────────────────────────────
+      - name: ENROLLMENT_ID
+        description: Surrogate primary key for each enrollment record.
+        entity:
+          type: primary
+          name: enrollment
+
+      # ── Foreign keys ────────────────────────────────────────────────────────
+      - name: STUDENT_SK
+        description: Foreign key to DIM_STUDENT.
+        entity:
+          type: foreign
+          name: student
+
+      - name: COURSE_SK
+        description: Foreign key to DIM_COURSE.
+        entity:
+          type: foreign
+          name: course
+
+      - name: DEPARTMENT_SK
+        description: Foreign key to DIM_DEPARTMENT.
+        entity:
+          type: foreign
+          name: department
+
+      - name: ADMISSION_SK
+        description: Foreign key to DIM_ADMISSION.
+        entity:
+          type: foreign
+          name: admission
+
+      # ── Time dimensions ──────────────────────────────────────────────────────
+      - name: ENROLLMENTDATE
+        description: Date the student enrolled.
+        granularity: day
+        dimension:
+          type: time
+          name: enrollment_date
+
+      - name: COURSESTARTDATE
+        description: Start date of the course.
+        granularity: day
+        dimension:
+          type: time
+          name: course_start_date
+
+      - name: COURSEENDDATE
+        description: End date of the course.
+        granularity: day
+        dimension:
+          type: time
+          name: course_end_date
+
+      # ── Categorical dimensions ───────────────────────────────────────────────
+      - name: ENROLLMENTSTATUS
+        description: Current status of the enrollment (e.g., Active, Dropped, Completed).
+        dimension:
+          type: categorical
+          name: enrollment_status
+
+      - name: ENROLLMENTACTIVE
+        description: Boolean — true if the enrollment is currently active.
+        dimension:
+          type: categorical
+          name: enrollment_active
+
+      - name: GRADE
+        description: Grade received by the student for the course.
+        dimension:
+          type: categorical
+          name: grade
+
+      - name: TERM
+        description: Academic term (e.g., Fall 2024, Spring 2025).
+        dimension:
+          type: categorical
+          name: term
+
+      - name: CREDITS
+        description: Credits associated with the enrolled course.
+
+    # ── Simple metrics — sibling of semantic_model, NOT inside it ─────────────
+    metrics:
+      - name: total_enrollments
+        label: Total Enrollments
+        description: Total number of enrollment records.
+        type: simple
+        agg: count
+        expr: ENROLLMENT_ID
+
+      - name: active_enrollments
+        label: Active Enrollments
+        description: Count of currently active enrollments.
+        type: simple
+        agg: sum
+        expr: "CASE WHEN ENROLLMENTACTIVE = true THEN 1 ELSE 0 END"
+
+      - name: completed_enrollments
+        label: Completed Enrollments
+        description: Count of enrollments with status Completed.
+        type: simple
+        agg: sum
+        expr: "CASE WHEN ENROLLMENTSTATUS = 'Completed' THEN 1 ELSE 0 END"
+
+      - name: total_credits_enrolled
+        label: Total Credits Enrolled
+        description: Total credits across all enrollment records.
+        type: simple
+        agg: sum
+        expr: CREDITS
+
+      - name: avg_credits_per_enrollment
+        label: Avg Credits per Enrollment
+        description: Average credits per enrollment record.
+        type: simple
+        agg: average
+        expr: CREDITS
+
+  # ---------------------------------------------------------------------------
+  # DIM: Student
+  # ---------------------------------------------------------------------------
+  - name: DIM_STUDENT
+    description: Student dimension. One row per student.
+
+    semantic_model:
+      enabled: true
+
+    columns:
+
+      - name: STUDENT_SK
+        description: Surrogate primary key for the student dimension.
+        entity:
+          type: primary
+          name: student
+
+      - name: STUDENT_ID
+        description: Natural/source key for the student.
+        dimension:
+          type: categorical
+          name: student_natural_id
+
+      - name: FIRST_NAME
+        description: Student first name.
+        dimension:
+          type: categorical
+          name: student_first_name
+
+      - name: LAST_NAME
+        description: Student last name.
+        dimension:
+          type: categorical
+          name: student_last_name
+
+      - name: DATE_OF_BIRTH
+        description: Student date of birth.
+        granularity: day
+        dimension:
+          type: time
+          name: date_of_birth
+
+      - name: GENDER
+        description: Student gender.
+        dimension:
+          type: categorical
+          name: gender
+
+      - name: DEPARTMENT_ID
+        description: Department the student belongs to (natural key).
+        entity:
+          type: foreign
+          name: department_natural
+
+  # ---------------------------------------------------------------------------
+  # DIM: Course
+  # ---------------------------------------------------------------------------
+  - name: DIM_COURSE
+    description: Course dimension. One row per course.
+
+    semantic_model:
+      enabled: true
+
+    columns:
+
+      - name: COURSE_SK
+        description: Surrogate primary key for the course dimension.
+        entity:
+          type: primary
+          name: course
+
+      - name: COURSE_ID
+        description: Natural/source key for the course.
+        dimension:
+          type: categorical
+          name: course_natural_id
+
+      - name: COURSE_NAME
+        description: Full name of the course.
+        dimension:
+          type: categorical
+          name: course_name
+
+      - name: COURSE_CODE
+        description: Short code identifier for the course (e.g., CS101).
+        dimension:
+          type: categorical
+          name: course_code
+
+      - name: DEPARTMENT_ID
+        description: Department that owns the course (natural key).
+        entity:
+          type: foreign
+          name: department_natural
+
+      - name: CREDITS
+        description: Credit hours awarded upon successful completion.
+
+      - name: INSTRUCTOR
+        description: Name of the course instructor.
+        dimension:
+          type: categorical
+          name: instructor
+
+    metrics:
+      - name: total_course_credits_offered
+        label: Total Course Credits Offered
+        description: Sum of credit hours across all courses.
+        type: simple
+        agg: sum
+        expr: CREDITS
+
+  # ---------------------------------------------------------------------------
+  # DIM: Department
+  # ---------------------------------------------------------------------------
+  - name: DIM_DEPARTMENT
+    description: Department dimension. One row per academic department.
+
+    semantic_model:
+      enabled: true
+
+    columns:
+
+      - name: DEPARTMENT_SK
+        description: Surrogate primary key for the department dimension.
+        entity:
+          type: primary
+          name: department
+
+      - name: DEPARTMENT_ID
+        description: Natural/source key for the department.
+        dimension:
+          type: categorical
+          name: department_natural_id
+
+      - name: DEPARTMENT_NAME
+        description: Full name of the academic department.
+        dimension:
+          type: categorical
+          name: department_name
+
+      - name: DEPARTMENT_HEAD
+        description: Name of the department head.
+        dimension:
+          type: categorical
+          name: department_head
+
+      - name: LOCATION
+        description: Physical location or campus of the department.
+        dimension:
+          type: categorical
+          name: department_location
+
+  # ---------------------------------------------------------------------------
+  # DIM: Admission
+  # ---------------------------------------------------------------------------
+  - name: DIM_ADMISSION
+    description: Admission dimension. One row per admission record.
+
+    semantic_model:
+      enabled: true
+
+    columns:
+
+      - name: ADMISSION_SK
+        description: Surrogate primary key for the admission dimension.
+        entity:
+          type: primary
+          name: admission
+
+      - name: ADMISSION_ID
+        description: Natural/source key for the admission record.
+        dimension:
+          type: categorical
+          name: admission_natural_id
+
+      - name: ADMISSION_DATE
+        description: Date the admission was recorded.
+        granularity: day
+        dimension:
+          type: time
+          name: admission_date
+
+      - name: ADMISSION_STATUS
+        description: Current status of the admission (e.g., Accepted, Rejected, Pending).
+        dimension:
+          type: categorical
+          name: admission_status
+
+      - name: PROGRAM
+        description: Academic program the student was admitted into.
+        dimension:
+          type: categorical
+          name: program
+
+      - name: ADMISSION_TYPE
+        description: Type of admission (e.g., Regular, Transfer, International).
+        dimension:
+          type: categorical
+          name: admission_type
+
+      - name: STUDENT_ID
+        description: Natural key linking the admission to a student.
+        entity:
+          type: foreign
+          name: student_natural
+
+# =============================================================================
+# Top-level metrics — advanced metrics only (ratio, derived, cumulative).
+# Simple metrics live inside each model's metrics: block above.
+# Ratio numerator/denominator are now DIRECT keys (no type_params wrapper).
+# =============================================================================
+
+metrics:
+
+  - name: enrollment_completion_rate
+    label: Enrollment Completion Rate
+    description: |
+      Ratio of completed enrollments to total enrollments.
+      Tracks academic throughput as a percentage.
+    type: ratio
+    numerator: completed_enrollments   # direct key, no type_params
+    denominator: total_enrollments     # direct key, no type_params
+
+# =============================================================================
+# Saved queries — valid query_params keys: metrics, group_by, where
+# Dimension syntax: Dimension('model_name__dimension_name')
+# =============================================================================
+
+saved_queries:
+
+  - name: enrollment_summary_by_term
+    description: Enrollment counts and credits broken down by term and department.
+    query_params:
+      metrics:
+        - total_enrollments
+        - total_credits_enrolled
+      group_by:
+        - Dimension('Fact_Student_Enrollment__term')
+        - Dimension('DIM_DEPARTMENT__department_name')
+
+  - name: active_enrollments_by_program
+    description: Active enrollment count sliced by admission program and course name.
+    query_params:
+      metrics:
+        - active_enrollments
+      group_by:
+        - Dimension('DIM_ADMISSION__program')
+        - Dimension('DIM_COURSE__course_name')
+
+  - name: credits_by_department_and_instructor
+    description: Total credits enrolled per department and instructor.
+    query_params:
+      metrics:
+        - total_credits_enrolled
+      group_by:
+        - Dimension('DIM_DEPARTMENT__department_name')
+        - Dimension('DIM_COURSE__instructor')
